@@ -35,6 +35,9 @@ sed -i "s/xxx/$BUILDKITE_TOKEN/g" /etc/buildkite-agent/buildkite-agent.cfg
 # Required by a specific Alembic client project
 pip install twisted
 
+# Set ulimit to something more than default of 1024
+echo -e "<domain> <type> <item>  <value>\n*       soft  nofile  20000\n*       hard  nofile  20000\n" > /etc/security/limits.d/buildkite.conf
+
 # Run all commands from here under buildkite-agent account.
 time su - buildkite-agent <<SCRIPT
 
@@ -101,6 +104,10 @@ sleep 5
 createuser postgres
 echo "ALTER USER postgres CREATEDB;" | psql -U buildkite-agent postgres
 
+# Install CloudFoundry CLI
+cd \$BUILD_USER_HOME_DIR
+curl -L "https://cli.run.pivotal.io/stable?release=linux64-binary&source=github" | tar -zx
+
 SCRIPT
 
 sudo cp /etc/buildkite-agent/hooks/{pre-command.sample,pre-command}
@@ -112,4 +119,3 @@ export PATH=/var/lib/buildkite-agent/.asdf/installs/nodejs/$NODEJS_VERSION/bin:/
 SCRIPT
 
 sudo service buildkite-agent start
-
